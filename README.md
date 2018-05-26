@@ -38,6 +38,7 @@ python mapreduce_total_plays.py -r emr
 --tracks='path to unique tracks.txt'
 ```
 
+Note this code will not work because the 2nd job fails when calculating the combinations over all users that listened to a song. Will either need to find a different way to calculate this or filter data to only consider songs that were played multiple times and/or filter for the most active users
 ```
 python map_reduce_user_similarity.py -r emr 'path to song data_file'
 --instance-type=m5.xlarge --num-core-instances=16 
