@@ -4,7 +4,9 @@
 
 This is an analysis of the [taste profile subset](https://labrosa.ee.columbia.edu/millionsong/tasteprofile) from the [Million Songs Data Set](https://labrosa.ee.columbia.edu/millionsong/). 
 
-MapReduce was used to analyze the similarity between users based on listening habits. The data contains:
+MapReduce was used to analyze the total plays for each song. I also attempted to rank users by similarity, but the iterator for user ratings across songs is too large.
+
+The data contains:
 * 1,019,318 unique users
 * 384,546 unique songs
 * 48,373,586 rows
