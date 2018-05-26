@@ -1,18 +1,14 @@
+# python map_reduce_user_similarity.py -r emr data/small_train_triplets.txt --instance-type=c1.medium --num-core-instances=2 > results.txt
+
 from mrjob.job import MRJob
 from mrjob.step import MRStep
 from collections import defaultdict
 
 import math
 import itertools
-import numpy as np
-
 
 class MRUserSimilarity(MRJob):
 	
-	def configure_options(self):
-	   super(MRUserSimilarity, self).configure_options()
-	   self.add_file_option('--tracks', help='directory to unique_tracks.txt')
-
 	def steps(self):
 		return [MRStep(mapper=self.mapper_user_plays,
 			reducer=self.reducer_normalize_plays),
@@ -36,18 +32,18 @@ class MRUserSimilarity(MRJob):
 			songCounts[songid] += int(plays)	
 
 		for songid, totalplays in songCounts.items():
-			yield songid, (userid, totalplays / total)
+			if math.floor(float(totalplays / total)) < 1:
+				yield songid, (userid, float(totalplays / total))
 
 	def mapper_song_user_ratings(self, songid, userplays):
 		yield songid, userplays
-		# for songid, plays in songs:
-		# 	yield songid, (userid, round(plays / total), 0)
 
 	def reducer_combine_users(self, songid, userplays):
 		combinations = list(itertools.combinations(userplays, 2))
-		for user1, user2 in combinations:
-			yield (user1[0], user2[0]), (user1[1], user2[1])
-			yield (user2[0], user1[0]), (user2[1], user1[1])
+		if combinations:
+			for user1, user2 in combinations:
+				yield (user1[0], user2[0]), (float(user1[1]), float(user2[1]))
+				yield (user2[0], user1[0]), (float(user2[1]), float(user1[1]))
 
 	def mapper_user_ratings_list(self, users, ratings):
 		yield users, ratings
@@ -56,17 +52,25 @@ class MRUserSimilarity(MRJob):
 		xx = 0
 		yy = 0
 		xy = 0
+		counter = 0
 
 		for vector in vectors:
+			counter += 1
 			xx += float(vector[0]) * float(vector[0])
 			yy += float(vector[1]) * float(vector[1])
 			xy += float(vector[0]) * float(vector[1])
-
-		return xy / float((math.sqrt(xx) * math.sqrt(yy)))
+		
+		numerator = float(xy)
+		denominator = float((math.sqrt(xx) * math.sqrt(yy)))
+		score = 0
+		if denominator:
+			score = numerator / denominator
+		return (score, counter)
 
 	def reducer_calculate_similarity(self, users, ratings):
-		similarity = self.cosine_similarity(ratings)
-		yield users, similarity
+		similarity, counter = self.cosine_similarity(ratings)
+		if counter >= 2:
+			yield users, similarity
 
 	def mapper_sort_results(self, users, similarity):
 		yield (users[0], similarity), users[1]

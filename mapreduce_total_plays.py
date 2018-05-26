@@ -6,9 +6,9 @@ import random
 
 class MRTotalPlaysPerSong(MRJob):
 	
-	def configure_options(self):
-	   super(MRTotalPlaysPerSong, self).configure_options()
-	   self.add_file_option('--tracks', help='directory to unique_tracks.txt')
+	def configure_args(self):
+	   super(MRTotalPlaysPerSong, self).configure_args()
+	   self.add_file_arg('--tracks', help='directory to unique_tracks.txt')
 
 	def load_song_dictionary(self):
 				
